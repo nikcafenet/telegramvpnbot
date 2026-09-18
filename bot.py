@@ -133,19 +133,16 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "⏳ اعتبار: 7 روز"
             )
 
-        else:
+        except Exception as e:
 
-            await update.message.reply_text(
-                "❌ ساخت کانفیگ ناموفق بود."
-            )
+    import traceback
 
-    except Exception as e:
+    print("ERROR:", repr(e))
+    traceback.print_exc()
 
-        print("ERROR:", e)
-
-        await update.message.reply_text(
-            "❌ اتصال به پنل با خطا مواجه شد."
-        )
+    await update.message.reply_text(
+        "❌ اتصال به پنل با خطا مواجه شد."
+    )
 
 
 # -------------------------

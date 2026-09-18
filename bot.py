@@ -17,10 +17,6 @@ PORT = int(os.getenv("PORT", "10000"))
 
 session = requests.Session()
 
-# -------------------------
-# Health Check برای Render
-# -------------------------
-
 web = Flask(__name__)
 
 
@@ -33,10 +29,6 @@ def run_web():
     web.run(host="0.0.0.0", port=PORT)
 
 
-# -------------------------
-# ورود به پنل
-# -------------------------
-
 def panel_login():
 
     url = PANEL_URL.rstrip("/") + "/login"
@@ -47,25 +39,16 @@ def panel_login():
         "twoFactorCode": ""
     }
 
-    response = session.post(
-        url,
-        json=data,
-        timeout=15
-    )
-
+    response = session.post(url, json=data, timeout=15)
     response.raise_for_status()
 
     result = response.json()
 
     if not result.get("success"):
-        raise Exception("Panel login failed")
+        raise Exception(f"Panel login failed: {result}")
 
     return True
 
-
-# -------------------------
-# ساخت کانفیگ
-# -------------------------
 
 def create_client(email, telegram_id):
 
@@ -87,20 +70,11 @@ def create_client(email, telegram_id):
 
     url = PANEL_URL.rstrip("/") + "/panel/api/clients/add"
 
-    response = session.post(
-        url,
-        json=payload,
-        timeout=15
-    )
-
+    response = session.post(url, json=payload, timeout=15)
     response.raise_for_status()
 
     return response.json()
 
-
-# -------------------------
-# Telegram
-# -------------------------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -125,6 +99,8 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
             telegram_id=user.id
         )
 
+        print("PANEL RESPONSE:", result)
+
         if result.get("success"):
 
             await update.message.reply_text(
@@ -133,21 +109,23 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "⏳ اعتبار: 7 روز"
             )
 
-        except Exception as e:
+        else:
 
-    import traceback
+            await update.message.reply_text(
+                "❌ ساخت کانفیگ ناموفق بود."
+            )
 
-    print("ERROR:", repr(e))
-    traceback.print_exc()
+    except Exception as e:
 
-    await update.message.reply_text(
-        "❌ اتصال به پنل با خطا مواجه شد."
-    )
+        import traceback
 
+        print("ERROR:", repr(e))
+        traceback.print_exc()
 
-# -------------------------
-# اجرای ربات
-# -------------------------
+        await update.message.reply_text(
+            "❌ اتصال به پنل با خطا مواجه شد."
+        )
+
 
 def main():
 
@@ -158,13 +136,8 @@ def main():
 
     app = Application.builder().token(BOT_TOKEN).build()
 
-    app.add_handler(
-        CommandHandler("start", start)
-    )
-
-    app.add_handler(
-        CommandHandler("buy", buy)
-    )
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("buy", buy))
 
     print("Bot is running...")
 
